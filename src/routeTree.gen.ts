@@ -9,38 +9,98 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MisReservasRouteImport } from './routes/mis-reservas'
+import { Route as AliadoRouteImport } from './routes/aliado'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SpaceIdRouteImport } from './routes/space.$id'
+import { Route as ReservaIdRouteImport } from './routes/reserva.$id'
 
+const MisReservasRoute = MisReservasRouteImport.update({
+  id: '/mis-reservas',
+  path: '/mis-reservas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AliadoRoute = AliadoRouteImport.update({
+  id: '/aliado',
+  path: '/aliado',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SpaceIdRoute = SpaceIdRouteImport.update({
+  id: '/space/$id',
+  path: '/space/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReservaIdRoute = ReservaIdRouteImport.update({
+  id: '/reserva/$id',
+  path: '/reserva/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aliado': typeof AliadoRoute
+  '/mis-reservas': typeof MisReservasRoute
+  '/reserva/$id': typeof ReservaIdRoute
+  '/space/$id': typeof SpaceIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/aliado': typeof AliadoRoute
+  '/mis-reservas': typeof MisReservasRoute
+  '/reserva/$id': typeof ReservaIdRoute
+  '/space/$id': typeof SpaceIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aliado': typeof AliadoRoute
+  '/mis-reservas': typeof MisReservasRoute
+  '/reserva/$id': typeof ReservaIdRoute
+  '/space/$id': typeof SpaceIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/aliado' | '/mis-reservas' | '/reserva/$id' | '/space/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/aliado' | '/mis-reservas' | '/reserva/$id' | '/space/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/aliado'
+    | '/mis-reservas'
+    | '/reserva/$id'
+    | '/space/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AliadoRoute: typeof AliadoRoute
+  MisReservasRoute: typeof MisReservasRoute
+  ReservaIdRoute: typeof ReservaIdRoute
+  SpaceIdRoute: typeof SpaceIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mis-reservas': {
+      id: '/mis-reservas'
+      path: '/mis-reservas'
+      fullPath: '/mis-reservas'
+      preLoaderRoute: typeof MisReservasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aliado': {
+      id: '/aliado'
+      path: '/aliado'
+      fullPath: '/aliado'
+      preLoaderRoute: typeof AliadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +108,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/space/$id': {
+      id: '/space/$id'
+      path: '/space/$id'
+      fullPath: '/space/$id'
+      preLoaderRoute: typeof SpaceIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reserva/$id': {
+      id: '/reserva/$id'
+      path: '/reserva/$id'
+      fullPath: '/reserva/$id'
+      preLoaderRoute: typeof ReservaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AliadoRoute: AliadoRoute,
+  MisReservasRoute: MisReservasRoute,
+  ReservaIdRoute: ReservaIdRoute,
+  SpaceIdRoute: SpaceIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
