@@ -108,7 +108,7 @@ function SpaceDetail() {
             <div className="mt-6">
               <h3 className="font-display font-bold text-lg mb-3">Lo que ofrece este lugar</h3>
               <div className="grid sm:grid-cols-2 gap-2">
-                {s.amenities.map((a) => {
+                {(s.amenities as Amenity[]).map((a) => {
                   const I = ICONS[a];
                   return (
                     <div key={a} className="flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-3">
