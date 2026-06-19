@@ -20,7 +20,7 @@ export const Route = createFileRoute("/space/$id")({
     if (!space) throw notFound();
     return { space };
   },
-  ssr: false,
+  
   notFoundComponent: () => (
     <div className="min-h-screen grid place-items-center">
       <div className="text-center">
