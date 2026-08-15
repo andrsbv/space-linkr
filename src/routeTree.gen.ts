@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MisReservasRouteImport } from './routes/mis-reservas'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AliadoRouteImport } from './routes/aliado'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SpaceIdRouteImport } from './routes/space.$id'
@@ -18,6 +19,11 @@ import { Route as ReservaIdRouteImport } from './routes/reserva.$id'
 const MisReservasRoute = MisReservasRouteImport.update({
   id: '/mis-reservas',
   path: '/mis-reservas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AliadoRoute = AliadoRouteImport.update({
@@ -44,6 +50,7 @@ const ReservaIdRoute = ReservaIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aliado': typeof AliadoRoute
+  '/dashboard': typeof DashboardRoute
   '/mis-reservas': typeof MisReservasRoute
   '/reserva/$id': typeof ReservaIdRoute
   '/space/$id': typeof SpaceIdRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/aliado': typeof AliadoRoute
+  '/dashboard': typeof DashboardRoute
   '/mis-reservas': typeof MisReservasRoute
   '/reserva/$id': typeof ReservaIdRoute
   '/space/$id': typeof SpaceIdRoute
@@ -59,19 +67,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/aliado': typeof AliadoRoute
+  '/dashboard': typeof DashboardRoute
   '/mis-reservas': typeof MisReservasRoute
   '/reserva/$id': typeof ReservaIdRoute
   '/space/$id': typeof SpaceIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/aliado' | '/mis-reservas' | '/reserva/$id' | '/space/$id'
+  fullPaths:
+    | '/'
+    | '/aliado'
+    | '/dashboard'
+    | '/mis-reservas'
+    | '/reserva/$id'
+    | '/space/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/aliado' | '/mis-reservas' | '/reserva/$id' | '/space/$id'
+  to:
+    | '/'
+    | '/aliado'
+    | '/dashboard'
+    | '/mis-reservas'
+    | '/reserva/$id'
+    | '/space/$id'
   id:
     | '__root__'
     | '/'
     | '/aliado'
+    | '/dashboard'
     | '/mis-reservas'
     | '/reserva/$id'
     | '/space/$id'
@@ -80,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AliadoRoute: typeof AliadoRoute
+  DashboardRoute: typeof DashboardRoute
   MisReservasRoute: typeof MisReservasRoute
   ReservaIdRoute: typeof ReservaIdRoute
   SpaceIdRoute: typeof SpaceIdRoute
@@ -92,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/mis-reservas'
       fullPath: '/mis-reservas'
       preLoaderRoute: typeof MisReservasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aliado': {
@@ -128,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AliadoRoute: AliadoRoute,
+  DashboardRoute: DashboardRoute,
   MisReservasRoute: MisReservasRoute,
   ReservaIdRoute: ReservaIdRoute,
   SpaceIdRoute: SpaceIdRoute,
@@ -135,3 +166,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
