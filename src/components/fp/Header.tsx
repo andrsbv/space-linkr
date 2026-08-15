@@ -22,6 +22,7 @@ export function Header() {
         <nav className="hidden md:flex items-center gap-1 text-sm">
           <NavLink to="/">Explorar</NavLink>
           <NavLink to="/mis-reservas">Mis reservas{pending ? ` (${pending})` : ""}</NavLink>
+          <NavLink to="/dashboard">Dashboard</NavLink>
           <NavLink to="/aliado">Soy aliado</NavLink>
         </nav>
         <div className="flex items-center gap-2">
