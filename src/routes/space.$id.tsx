@@ -60,7 +60,8 @@ const SLOTS = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "1
 const UNAVAILABLE = new Set(["12:00", "13:00", "18:00"]);
 
 function SpaceDetail() {
-  const { space: s } = Route.useLoaderData();
+  const { id } = Route.useParams();
+  const s = getSpace(id)!;
   const navigate = useNavigate();
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [start, setStart] = useState("10:00");
