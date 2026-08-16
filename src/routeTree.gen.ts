@@ -9,21 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as MisReservasRouteImport } from './routes/mis-reservas'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as AliadoRouteImport } from './routes/aliado'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SpaceIdRouteImport } from './routes/space.$id'
+import { Route as AliadoRouteImport } from './routes/aliado'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as MisReservasRouteImport } from './routes/mis-reservas'
 import { Route as ReservaIdRouteImport } from './routes/reserva.$id'
+import { Route as SpaceIdRouteImport } from './routes/space.$id'
 
-const MisReservasRoute = MisReservasRouteImport.update({
-  id: '/mis-reservas',
-  path: '/mis-reservas',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AliadoRoute = AliadoRouteImport.update({
@@ -31,19 +26,24 @@ const AliadoRoute = AliadoRouteImport.update({
   path: '/aliado',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SpaceIdRoute = SpaceIdRouteImport.update({
-  id: '/space/$id',
-  path: '/space/$id',
+const MisReservasRoute = MisReservasRouteImport.update({
+  id: '/mis-reservas',
+  path: '/mis-reservas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReservaIdRoute = ReservaIdRouteImport.update({
   id: '/reserva/$id',
   path: '/reserva/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SpaceIdRoute = SpaceIdRouteImport.update({
+  id: '/space/$id',
+  path: '/space/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -110,18 +110,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/mis-reservas': {
-      id: '/mis-reservas'
-      path: '/mis-reservas'
-      fullPath: '/mis-reservas'
-      preLoaderRoute: typeof MisReservasRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/aliado': {
@@ -131,18 +124,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AliadoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/space/$id': {
-      id: '/space/$id'
-      path: '/space/$id'
-      fullPath: '/space/$id'
-      preLoaderRoute: typeof SpaceIdRouteImport
+    '/mis-reservas': {
+      id: '/mis-reservas'
+      path: '/mis-reservas'
+      fullPath: '/mis-reservas'
+      preLoaderRoute: typeof MisReservasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reserva/$id': {
@@ -150,6 +143,13 @@ declare module '@tanstack/react-router' {
       path: '/reserva/$id'
       fullPath: '/reserva/$id'
       preLoaderRoute: typeof ReservaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/space/$id': {
+      id: '/space/$id'
+      path: '/space/$id'
+      fullPath: '/space/$id'
+      preLoaderRoute: typeof SpaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

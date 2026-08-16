@@ -35,6 +35,7 @@ export function QrScannerModal({ isOpen, onClose, spaceId = "sweet-urdesa" }: Qr
       checkedInAt: Date.now(),
     });
 
+    /* commented to make the math logic works as expected
     // Automatically update space occupancy
     const currentSpace = getMergedSpace(resToValidate.spaceId);
     if (currentSpace) {
@@ -42,6 +43,7 @@ export function QrScannerModal({ isOpen, onClose, spaceId = "sweet-urdesa" }: Qr
         occupied: Math.min(currentSpace.capacity, currentSpace.occupied + resToValidate.people),
       });
     }
+    */
 
     setScannedReservation(resToValidate);
     setSuccessMessage(`Check-in validado exitosamente para ${resToValidate.people} persona(s). Cupón ${resToValidate.couponCode} activado.`);

@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bell, Calendar, Clock, MapPin, QrCode, X, CheckCircle2 } from "lucide-react";
 import { Header } from "@/components/fp/Header";
-import { useReservations, updateReservation } from "@/lib/focusplace-store";
+import { useReservations, updateReservation, getMergedSpace, updateSpaceInventory } from "@/lib/focusplace-store";
 
 export const Route = createFileRoute("/mis-reservas")({
   head: () => ({ meta: [{ title: "Mis reservas — FocusPlace" }] }),
@@ -71,7 +71,18 @@ function MisReservas() {
                     <QrCode className="size-3.5" /> Mostrar QR
                   </Link>
                   <button
-                    onClick={() => updateReservation(r.id, { status: "Cancelada" })}
+                    onClick={() => {
+                      // 1. Marca la reserva como cancelada en el store de reservas
+                      updateReservation(r.id, { status: "Cancelada" });
+                      
+                      // 2. Obtiene la ocupación en vivo y libera los asientos en el store de inventario
+                      const space = getMergedSpace(r.spaceId);
+                      if (space) {
+                        updateSpaceInventory(r.spaceId, { 
+                          occupied: Math.max(0, Number(space.occupied) - Number(r.people)) 
+                        });
+                      }
+                    }}
                     className="inline-flex items-center gap-1 h-9 px-3 rounded-full bg-muted text-muted-foreground text-xs font-medium hover:bg-destructive/10 hover:text-destructive"
                   >
                     <X className="size-3.5" /> Cancelar

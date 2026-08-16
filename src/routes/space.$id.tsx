@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ArrowLeft, Star, MapPin, Clock, Wifi, Plug, Volume2, Coffee, Snowflake, Users, Calendar, Tag, AlertTriangle, Sparkles } from "lucide-react";
 import { Header } from "@/components/fp/Header";
 import { AMENITY_LABELS, type Amenity, getSpace, occupancyColor, occupancyLevel } from "@/lib/focusplace-data";
-import { addReservation, useSpaceData, useReviews } from "@/lib/focusplace-store";
+import { addReservation, useSpaceData, useReviews, updateSpaceInventory } from "@/lib/focusplace-store";
 
 function SpaceError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -82,6 +82,11 @@ function SpaceDetail() {
       spaceName: s.name,
       date, start, end, people,
     });
+
+    updateSpaceInventory(s.id, {
+      occupied: Math.min(Number(s.capacity), Number(s.occupied) + Number(people))
+    });
+
     navigate({ to: "/reserva/$id", params: { id: r.id } });
   };
 
