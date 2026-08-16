@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate, notFound } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Star, MapPin, Clock, Wifi, Plug, Volume2, Coffee, Snowflake, Users, Calendar, Tag } from "lucide-react";
+import { ArrowLeft, Star, MapPin, Clock, Wifi, Plug, Volume2, Coffee, Snowflake, Users, Calendar, Tag, AlertTriangle, Sparkles } from "lucide-react";
 import { Header } from "@/components/fp/Header";
 import { AMENITY_LABELS, type Amenity, getSpace, occupancyColor, occupancyLevel } from "@/lib/focusplace-data";
-import { addReservation } from "@/lib/focusplace-store";
+import { addReservation, useSpaceData, useReviews } from "@/lib/focusplace-store";
 
 function SpaceError({ error, reset }: { error: Error; reset: () => void }) {
   return (
@@ -61,7 +61,12 @@ const UNAVAILABLE = new Set(["12:00", "13:00", "18:00"]);
 
 function SpaceDetail() {
   const { id } = Route.useParams();
-  const s = getSpace(id)!;
+  const staticSpace = getSpace(id)!;
+  const liveSpace = useSpaceData(id);
+  const s = liveSpace || staticSpace;
+
+  const reviews = useReviews(id);
+
   const navigate = useNavigate();
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [start, setStart] = useState("10:00");
@@ -80,6 +85,10 @@ function SpaceDetail() {
     navigate({ to: "/reserva/$id", params: { id: r.id } });
   };
 
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviews.length).toFixed(1)
+    : s.rating;
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -93,7 +102,7 @@ function SpaceDetail() {
             <div className="rounded-3xl overflow-hidden aspect-[16/9] bg-muted relative">
               <img src={s.image} alt={s.name} className="w-full h-full object-cover" />
               <div className={`absolute top-4 left-4 text-xs font-semibold px-3 py-1.5 rounded-full ${occupancyColor(s)}`}>
-                {occupancyLevel(s)} ahora · {s.capacity - s.occupied} de {s.capacity} libres
+                {occupancyLevel(s)} ahora · {Math.max(0, s.capacity - s.occupied)} de {s.capacity} libres
               </div>
             </div>
 
@@ -104,7 +113,7 @@ function SpaceDetail() {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-2">
                   <span className="inline-flex items-center gap-1"><MapPin className="size-3.5" /> {s.address}</span>
                   <span className="inline-flex items-center gap-1"><Clock className="size-3.5" /> {s.hours}</span>
-                  <span className="inline-flex items-center gap-1"><Star className="size-3.5 fill-accent text-accent" /> {s.rating} · {s.reviews} reseñas</span>
+                  <span className="inline-flex items-center gap-1"><Star className="size-3.5 fill-amber-400 text-amber-400" /> {avgRating} · {s.reviews + reviews.length} reseñas</span>
                 </div>
               </div>
               <div className="text-right">
@@ -140,6 +149,53 @@ function SpaceDetail() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+
+            {/* Reviews Section */}
+            <div className="mt-8 border-t border-border pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-display font-bold text-lg flex items-center gap-2">
+                    <Star className="size-5 fill-amber-400 text-amber-400" /> Reseñas y Experiencia de Usuarios
+                  </h3>
+                  <p className="text-xs text-muted-foreground">Monitoreo de calidad verificado por check-in QR</p>
+                </div>
+                <span className="text-sm font-bold bg-muted px-3 py-1 rounded-full">
+                  ★ {avgRating} / 5.0
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {reviews.map((rev) => (
+                  <div key={rev.id} className="bg-card border border-border rounded-2xl p-4 text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 font-semibold">
+                        <span>{rev.userName}</span>
+                        {rev.userTier === "premium" && (
+                          <span className="text-[10px] bg-amber-500/15 text-amber-600 px-1.5 py-0.2 rounded-full font-bold flex items-center gap-0.5">
+                            <Sparkles className="size-2.5" /> PRO
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex text-amber-400">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`size-3.5 ${i < rev.rating ? "fill-amber-400" : "fill-muted text-muted"}`} />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-foreground/80">{rev.comment}</p>
+                    {rev.issues && rev.issues.length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {rev.issues.map((iss) => (
+                          <span key={iss} className="inline-flex items-center gap-1 text-[10px] bg-destructive/10 text-destructive px-2 py-0.5 rounded-full font-medium">
+                            <AlertTriangle className="size-2.5" /> Reportado: {iss}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -247,3 +303,4 @@ function Row({ k, v, muted }: { k: string; v: string; muted?: boolean }) {
     </div>
   );
 }
+

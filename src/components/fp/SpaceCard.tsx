@@ -1,12 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { Star, MapPin, Wifi, Plug, Volume2, Coffee, Snowflake, Users } from "lucide-react";
 import { AMENITY_LABELS, type Amenity, type Space, occupancyColor, occupancyLevel } from "@/lib/focusplace-data";
+import { useSpaceData } from "@/lib/focusplace-store";
 
 const ICONS: Record<Amenity, React.ComponentType<{ className?: string }>> = {
   wifi: Wifi, enchufes: Plug, silencio: Volume2, cafe: Coffee, ac: Snowflake, grupal: Users,
 };
 
-export function SpaceCard({ s }: { s: Space }) {
+export function SpaceCard({ s: initialSpace }: { s: Space }) {
+  const liveSpace = useSpaceData(initialSpace.id);
+  const s = liveSpace || initialSpace;
+
   return (
     <Link
       to="/space/$id"
@@ -21,10 +25,10 @@ export function SpaceCard({ s }: { s: Space }) {
           loading="lazy"
         />
         <div className={`absolute top-3 left-3 text-xs font-semibold px-2.5 py-1 rounded-full ${occupancyColor(s)}`}>
-          {occupancyLevel(s)} · {s.capacity - s.occupied} libres
+          {occupancyLevel(s)} · {Math.max(0, s.capacity - s.occupied)} libres
         </div>
         <div className="absolute top-3 right-3 bg-card/90 backdrop-blur px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-          <Star className="size-3 fill-accent text-accent" /> {s.rating}
+          <Star className="size-3 fill-amber-400 text-amber-400" /> {s.rating}
         </div>
       </div>
       <div className="p-4 flex-1 flex flex-col gap-2">
@@ -55,3 +59,4 @@ export function SpaceCard({ s }: { s: Space }) {
     </Link>
   );
 }
+

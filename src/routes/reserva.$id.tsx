@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { CheckCircle2, MapPin, Calendar, Clock, Users, Tag, Share2, Download, QrCode } from "lucide-react";
+import { CheckCircle2, MapPin, Calendar, Clock, Users, Tag, Share2, Download, QrCode, Star } from "lucide-react";
 import { Header } from "@/components/fp/Header";
-import { getReservation, updateReservation, type Reservation } from "@/lib/focusplace-store";
-import { getSpace } from "@/lib/focusplace-data";
+import { ReviewModal } from "@/components/fp/ReviewModal";
+import { useReservations, updateReservation, getMergedSpace, type Reservation } from "@/lib/focusplace-store";
 
 export const Route = createFileRoute("/reserva/$id")({
   head: () => ({ meta: [{ title: "Reserva confirmada — FocusPlace" }] }),
@@ -13,25 +13,23 @@ export const Route = createFileRoute("/reserva/$id")({
 function ReservaPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const [r, setR] = useState<Reservation | undefined>();
-  const [checkedIn, setCheckedIn] = useState(false);
+  const reservations = useReservations();
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+
+  const r = reservations.find((x) => x.id === id);
 
   useEffect(() => {
-    const found = getReservation(id);
-    if (!found) {
+    if (reservations.length > 0 && !r) {
       navigate({ to: "/" });
-      return;
     }
-    setR(found);
-    setCheckedIn(found.status === "Check-in realizado");
-  }, [id, navigate]);
+  }, [id, r, reservations, navigate]);
 
   if (!r) return null;
-  const space = getSpace(r.spaceId);
+  const space = getMergedSpace(r.spaceId);
+  const checkedIn = r.status === "Check-in realizado";
 
   const doCheckIn = () => {
-    updateReservation(r.id, { status: "Check-in realizado" });
-    setCheckedIn(true);
+    updateReservation(r.id, { status: "Check-in realizado", checkedInAt: Date.now() });
   };
 
   const qrPayload = encodeURIComponent(
@@ -76,12 +74,12 @@ function ReservaPage() {
           </div>
 
           <div className="p-6 grid sm:grid-cols-[auto_1fr] gap-6 items-start">
-            <div className="mx-auto">
+            <div className="mx-auto text-center">
               <div className="bg-white p-3 rounded-2xl border border-border">
                 <img src={qrUrl} alt="Código QR de check-in" className="size-48 block" />
               </div>
-              <div className="text-center text-xs text-muted-foreground mt-2">
-                Escanea en recepción
+              <div className="text-xs text-muted-foreground mt-2 font-mono">
+                {checkedIn ? "✓ QR Validado por Aliado" : "Muestra este QR en el local"}
               </div>
             </div>
 
@@ -108,13 +106,16 @@ function ReservaPage() {
 
               <div className="flex flex-wrap gap-2">
                 {!checkedIn ? (
-                  <button onClick={doCheckIn} className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition">
-                    Simular check-in (QR escaneado)
+                  <button onClick={doCheckIn} className="flex-1 h-11 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition text-xs">
+                    Simular Check-in Manual
                   </button>
                 ) : (
-                  <div className="flex-1 h-11 rounded-xl bg-success/15 text-success font-semibold inline-flex items-center justify-center gap-2">
-                    <CheckCircle2 className="size-4" /> Acceso registrado
-                  </div>
+                  <button
+                    onClick={() => setIsReviewOpen(true)}
+                    className="flex-1 h-11 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition flex items-center justify-center gap-2 text-xs shadow"
+                  >
+                    <Star className="size-4 fill-slate-950" /> Dejar Reseña del Local
+                  </button>
                 )}
                 <button className="h-11 px-4 rounded-xl bg-muted hover:bg-secondary transition inline-flex items-center gap-2 text-sm font-medium">
                   <Share2 className="size-4" /> Compartir
@@ -133,6 +134,13 @@ function ReservaPage() {
           <Link to="/" className="text-muted-foreground hover:text-foreground">Reservar otro espacio</Link>
         </div>
       </div>
+
+      <ReviewModal
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        spaceId={r.spaceId}
+        spaceName={r.spaceName}
+      />
     </div>
   );
 }
@@ -147,3 +155,4 @@ function Detail({ icon: Icon, k, v, highlight }: { icon: React.ComponentType<{ c
     </div>
   );
 }
+

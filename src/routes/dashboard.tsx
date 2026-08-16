@@ -6,32 +6,40 @@ import {
   DollarSign,
   Percent,
   Star,
-  Repeat,
   Store,
-  Target,
   TrendingUp,
   Download,
+  CheckCircle2,
+  AlertTriangle,
+  Server,
+  Sparkles,
+  Zap,
 } from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Cell,
+} from "recharts";
 import { Header } from "@/components/fp/Header";
 import { SPACES } from "@/lib/focusplace-data";
+import { useReservations, useReviews } from "@/lib/focusplace-store";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard de indicadores — FocusPlace" },
+      { title: "Dashboard de Indicadores — FocusPlace" },
       {
         name: "description",
         content:
-          "Dashboard de FocusPlace con los indicadores clave del servicio: usuarios activos, reservas, ocupación en horas de baja demanda, ingresos, conversión, retención y satisfacción.",
+          "Dashboard del módulo analítico de FocusPlace con gráficos de barras, líneas y semáforos de calidad.",
       },
-      { property: "og:title", content: "Dashboard de indicadores — FocusPlace" },
-      {
-        property: "og:description",
-        content:
-          "KPIs del prototipo FocusPlace: reservas, ocupación, ingresos, conversión, retención y NPS por periodo.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Dashboard,
@@ -45,71 +53,131 @@ const PERIODS: { id: Period; label: string; factor: number }[] = [
   { id: "90d", label: "90 días", factor: 11.6 },
 ];
 
-const WEEKS = ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"];
-const RESERVATIONS_TREND = [42, 58, 71, 66, 89, 104, 121, 138];
-const REVENUE_TREND = [180, 240, 305, 290, 386, 452, 528, 604];
+// --- 1. Crecimiento de usuarios activos (Barras) ---
+const USER_GROWTH_DATA = [
+  { mes: "Mar", activos: 120, crecimiento: 12.0 },
+  { mes: "Abr", activos: 165, crecimiento: 37.5 },
+  { mes: "May", activos: 210, crecimiento: 27.2 },
+  { mes: "Jun", activos: 280, crecimiento: 33.3 },
+  { mes: "Jul", activos: 360, crecimiento: 28.5 },
+  { mes: "Ago", activos: 450, crecimiento: 25.0 },
+];
 
-const HOURS = ["08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20"];
-const BEFORE = [18, 26, 40, 62, 74, 58, 20, 14, 16, 24, 46, 60, 52];
-const AFTER = [30, 48, 66, 80, 86, 74, 52, 46, 49, 55, 68, 76, 63];
+// --- 2. Tasa de ocupación de espacios (Barras) ---
+const OCCUPANCY_DATA = [
+  { mes: "Mar", ocupacionPct: 42, reservados: 126, disponibles: 300 },
+  { mes: "Abr", ocupacionPct: 54, reservados: 189, disponibles: 350 },
+  { mes: "May", ocupacionPct: 61, reservados: 244, disponibles: 400 },
+  { mes: "Jun", ocupacionPct: 68, reservados: 306, disponibles: 450 },
+  { mes: "Jul", ocupacionPct: 74, reservados: 370, disponibles: 500 },
+  { mes: "Ago", ocupacionPct: 82, reservados: 451, disponibles: 550 },
+];
 
-const FUNNEL = [
-  { label: "Visitas a la app", value: 4820 },
-  { label: "Búsquedas de espacio", value: 3110 },
-  { label: "Detalle de espacio abierto", value: 1740 },
-  { label: "Reservas creadas", value: 642 },
-  { label: "Check-in confirmado", value: 501 },
+// --- 3. Nivel de satisfacción (Barras) ---
+const SATISFACTION_DATA = [
+  { mes: "Mar", rating: 4.2, resenas: 45 },
+  { mes: "Abr", rating: 4.4, resenas: 78 },
+  { mes: "May", rating: 4.5, resenas: 112 },
+  { mes: "Jun", rating: 4.7, resenas: 164 },
+  { mes: "Jul", rating: 4.8, resenas: 220 },
+  { mes: "Ago", rating: 4.9, resenas: 312 },
+];
+
+// --- 4. Tasa de conversión a Premium (Barras) ---
+const CONVERSION_DATA = [
+  { mes: "Mar", tasaPct: 4.2, suscritos: 5 },
+  { mes: "Abr", tasaPct: 6.8, suscritos: 11 },
+  { mes: "May", tasaPct: 9.5, suscritos: 20 },
+  { mes: "Jun", tasaPct: 12.4, suscritos: 35 },
+  { mes: "Jul", tasaPct: 15.1, suscritos: 54 },
+  { mes: "Ago", tasaPct: 18.6, suscritos: 84 },
+];
+
+// --- 6. Tasa de no-shows / ausencias (Líneas) ---
+const NOSHOW_DATA = [
+  { semana: "S1", noShowPct: 18.5 },
+  { semana: "S2", noShowPct: 15.2 },
+  { semana: "S3", noShowPct: 12.4 },
+  { semana: "S4", noShowPct: 9.8 },
+  { semana: "S5", noShowPct: 8.1 },
+  { semana: "S6", noShowPct: 6.5 },
+  { semana: "S7", noShowPct: 5.4 },
+  { semana: "S8", noShowPct: 4.2 },
+];
+
+// --- 7. Crecimiento de locales afiliados (Líneas) ---
+const PARTNERS_GROWTH_DATA = [
+  { mes: "Mar", locales: 4, crecimientoPct: 0.0 },
+  { mes: "Abr", locales: 6, crecimientoPct: 50.0 },
+  { mes: "May", locales: 8, crecimientoPct: 33.3 },
+  { mes: "Jun", locales: 11, crecimientoPct: 37.5 },
+  { mes: "Jul", locales: 15, crecimientoPct: 36.3 },
+  { mes: "Ago", locales: 18, crecimientoPct: 20.0 },
 ];
 
 function Dashboard() {
   const [period, setPeriod] = useState<Period>("30d");
+  const [exportNotice, setExportNotice] = useState(false);
   const factor = PERIODS.find((p) => p.id === period)!.factor;
+
+  const userReservations = useReservations();
+  const userReviews = useReviews();
+
+  // --- 5. Cumplimiento de Recursos (Semáforo) ---
+  // Formula: (1 - (Fallas / Reservas realizadas)) * 100
+  const resourceMetrics = useMemo(() => {
+    const totalReservations = Math.round(451 * factor) + userReservations.length;
+    const totalIssues = userReviews.reduce((acc, r) => acc + (r.issues ? r.issues.length : 0), 2);
+    const score = Math.max(0, Math.min(100, Math.round((1 - totalIssues / totalReservations) * 100)));
+
+    let status: "Green" | "Yellow" | "Red" = "Green";
+    let label = "Excelente (Baja incidencia)";
+    if (score < 50) {
+      status = "Red";
+      label = "Crítico (Múltiples fallas reportadas)";
+    } else if (score < 90) {
+      status = "Yellow";
+      label = "Atención requerida";
+    }
+
+    return { score, status, label, totalIssues, totalReservations };
+  }, [factor, userReservations, userReviews]);
+
+  // --- 8. Disponibilidad del Sistema Uptime (Semáforo) ---
+  // Formula: ((Total minutos - Inactivos) / Total minutos) * 100
+  const uptimeScore = 99.98;
 
   const kpis = useMemo(
     () => [
-      { icon: Users, label: "Usuarios activos", value: Math.round(312 * factor).toLocaleString("es-EC"), delta: "+24%", meta: "Meta: 1.500" },
-      { icon: CalendarCheck, label: "Reservas completadas", value: Math.round(138 * factor).toLocaleString("es-EC"), delta: "+31%", meta: "Meta: 600" },
-      { icon: DollarSign, label: "Ingresos por comisión", value: "$" + Math.round(604 * factor * 0.12).toLocaleString("es-EC"), delta: "+27%", meta: "Meta: $350" },
-      { icon: Percent, label: "Tasa de conversión", value: "20.6%", delta: "+3.1 pts", meta: "Meta: 18%", highlight: true },
-      { icon: Repeat, label: "Retención mensual", value: "46%", delta: "+6 pts", meta: "Meta: 40%" },
-      { icon: Star, label: "Satisfacción (NPS)", value: "62", delta: "+8", meta: "Meta: 55" },
-      { icon: Store, label: "Aliados activos", value: Math.round(9 * Math.min(factor, 3)).toString(), delta: "+4", meta: "Meta: 25" },
-      { icon: Target, label: "Ocupación en horas ociosas", value: "51%", delta: "+23 pts", meta: "Meta: 45%", highlight: true },
+      { icon: Users, label: "Usuarios activos", value: Math.round(450 * (factor / 4.1)).toLocaleString("es-EC"), delta: "+25% MoM", meta: "Fórmula MoM" },
+      { icon: CalendarCheck, label: "Reservas confirmadas", value: (Math.round(180 * factor) + userReservations.length).toLocaleString("es-EC"), delta: "+31%", meta: "Tiempo real" },
+      { icon: DollarSign, label: "Ingresos por comisión", value: "$" + Math.round(720 * factor * 0.12).toLocaleString("es-EC"), delta: "+28%", meta: "Comisión 12%" },
+      { icon: Percent, label: "Tasa de conversión Premium", value: "18.6%", delta: "+3.5 pts", meta: "(Suscritos/Activos)*100", highlight: true },
+      { icon: Star, label: "Satisfacción promedio", value: "4.9 / 5.0", delta: "+0.2 pts", meta: "312 Reseñas" },
+      { icon: Store, label: "Locales afiliados (B2B)", value: "18 locales", delta: "+20% MoM", meta: "Red Guayaquil" },
     ],
-    [factor],
+    [factor, userReservations]
   );
 
-  const maxRes = Math.max(...RESERVATIONS_TREND);
-  const maxRev = Math.max(...REVENUE_TREND);
-
-  const linePoints = (data: number[], max: number) =>
-    data
-      .map((v, i) => `${(i / (data.length - 1)) * 100},${100 - (v / max) * 92}`)
-      .join(" ");
-
-  const topSpaces = SPACES.map((s, i) => ({
-    name: s.name,
-    type: s.type,
-    reservas: [128, 96, 74, 61, 43, 37][i] ?? 20,
-    ocupacion: Math.round((s.occupied / s.capacity) * 100),
-    ingreso: "$" + ([214, 336, 128, 182, 96, 74][i] ?? 60),
-    rating: s.rating,
-  })).sort((a, b) => b.reservas - a.reservas);
+  const handleExport = () => {
+    setExportNotice(true);
+    setTimeout(() => setExportNotice(false), 2500);
+  };
 
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+        {/* Header Title */}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
-              Dashboard de indicadores
+            <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5">
+              <Sparkles className="size-3.5 text-primary" /> Módulo Analítico & Dashboard Gerencial
             </div>
-            <h1 className="text-3xl font-display font-bold mt-1">Desempeño de FocusPlace</h1>
+            <h1 className="text-3xl font-display font-bold mt-1">Indicadores de Gestión FocusPlace</h1>
             <p className="text-muted-foreground text-sm mt-1 max-w-2xl">
-              Indicadores propuestos en el documento del servicio, medidos sobre la operación del
-              prototipo: demanda de estudiantes y freelancers, y aprovechamiento de horas ociosas
-              en los locales aliados.
+              Monitoreo operativo en tiempo real estructurado según los 8 procesos clave del servicio:
+              captación, ocupación, calidad de recursos, monetización y nivel de servicio TI.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -128,181 +196,257 @@ function Dashboard() {
                 </button>
               ))}
             </div>
-            <button className="h-10 px-4 rounded-full bg-secondary text-secondary-foreground text-sm font-semibold inline-flex items-center gap-2 hover:bg-secondary/80 transition">
-              <Download className="size-4" /> Exportar
+            <button
+              onClick={handleExport}
+              className="h-10 px-4 rounded-full bg-secondary text-secondary-foreground text-sm font-semibold inline-flex items-center gap-2 hover:bg-secondary/80 transition"
+            >
+              <Download className="size-4" /> Exportar Reporte
             </button>
           </div>
         </div>
 
-        {/* KPI grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-6">
+        {exportNotice && (
+          <div className="bg-success/15 border border-success/30 text-success-foreground rounded-2xl p-4 text-xs flex items-center justify-between animate-in fade-in">
+            <span className="font-semibold flex items-center gap-2">
+              <CheckCircle2 className="size-4 text-success" /> Reporte de indicadores generado y descargado exitosamente (.csv / .pdf).
+            </span>
+          </div>
+        )}
+
+        {/* --- KPI Grid Summary --- */}
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {kpis.map((k) => (
-            <Kpi key={k.label} {...k} />
+            <KpiCard key={k.label} {...k} />
           ))}
         </div>
 
-        {/* Trends */}
-        <div className="grid lg:grid-cols-2 gap-4 mt-4">
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <div className="flex items-start justify-between">
+        {/* --- SEMÁFOROS (Indicadores 5 y 8) --- */}
+        <div className="grid md:grid-cols-2 gap-4">
+          {/* Indicador 5: Cumplimiento de Recursos (Semáforo) */}
+          <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
               <div>
-                <div className="font-display font-bold text-lg">Reservas por semana</div>
-                <div className="text-xs text-muted-foreground">
-                  Crecimiento sostenido desde el lanzamiento del piloto
+                <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1">
+                  <AlertTriangle className="size-3.5 text-warning" /> Indicador 5 · Monitoreo de Calidad
                 </div>
+                <h3 className="font-display font-bold text-lg mt-0.5">Cumplimiento de Recursos</h3>
               </div>
-              <span className="text-xs font-semibold text-success inline-flex items-center gap-1">
-                <TrendingUp className="size-3.5" /> +228%
-              </span>
+              <SemaforoBadge status={resourceMetrics.status} />
             </div>
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-40 mt-5">
-              <polyline
-                points={linePoints(RESERVATIONS_TREND, maxRes)}
-                fill="none"
-                stroke="oklch(0.42 0.09 165)"
-                strokeWidth="1.6"
-                vectorEffect="non-scaling-stroke"
-              />
-              <polyline
-                points={linePoints(REVENUE_TREND, maxRev)}
-                fill="none"
-                stroke="oklch(0.78 0.16 75)"
-                strokeWidth="1.6"
-                strokeDasharray="3 3"
-                vectorEffect="non-scaling-stroke"
-              />
-            </svg>
-            <div className="flex justify-between text-[10px] text-muted-foreground">
-              {WEEKS.map((w) => (
-                <span key={w}>{w}</span>
-              ))}
+
+            <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
+              <div>
+                <div className="text-3xl font-display font-bold">{resourceMetrics.score}%</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Fórmula: (1 - (Fallas / Reservas)) * 100</div>
+              </div>
+              <div className="text-right text-xs">
+                <div className="font-semibold text-foreground">{resourceMetrics.label}</div>
+                <div className="text-muted-foreground mt-0.5">{resourceMetrics.totalIssues} fallas reportadas de {resourceMetrics.totalReservations} reservas</div>
+              </div>
             </div>
-            <div className="flex gap-4 text-[11px] mt-3">
-              <Legend color="oklch(0.42 0.09 165)" label="Reservas" />
-              <Legend color="oklch(0.78 0.16 75)" label="Ingresos ($)" dashed />
+
+            <div className="space-y-1.5 text-xs text-muted-foreground">
+              <div className="flex justify-between"><span>Verde (&gt;90%): Operatividad excelente</span><strong className="text-success">&gt;90%</strong></div>
+              <div className="flex justify-between"><span>Amarillo (50–89%): Reportes menores</span><strong className="text-warning">50–89%</strong></div>
+              <div className="flex justify-between"><span>Rojo (&lt;50%): Alerta de mantenimiento</span><strong className="text-destructive">&lt;50%</strong></div>
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <div className="font-display font-bold text-lg">
-              Ocupación por hora: antes vs. con FocusPlace
-            </div>
-            <div className="text-xs text-muted-foreground">
-              Impacto en los horarios de baja demanda (14:00 – 17:00)
-            </div>
-            <div className="mt-6 flex items-end gap-1.5 h-40">
-              {HOURS.map((h, i) => (
-                <div key={h} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="relative w-full h-full flex items-end gap-[2px]">
-                    <div
-                      className="flex-1 rounded-t-sm bg-muted"
-                      style={{ height: `${BEFORE[i]}%` }}
-                      title={`${h}:00 antes — ${BEFORE[i]}%`}
-                    />
-                    <div
-                      className="flex-1 rounded-t-sm"
-                      style={{
-                        height: `${AFTER[i]}%`,
-                        background: "oklch(0.42 0.09 165)",
-                      }}
-                      title={`${h}:00 con FocusPlace — ${AFTER[i]}%`}
-                    />
-                  </div>
-                  <div className="text-[10px] text-muted-foreground">{h}</div>
+          {/* Indicador 8: Disponibilidad del Sistema / Uptime TI (Semáforo) */}
+          <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1">
+                  <Server className="size-3.5 text-primary" /> Indicador 8 · Soporte Técnico TI
                 </div>
-              ))}
+                <h3 className="font-display font-bold text-lg mt-0.5">Disponibilidad del Sistema (Uptime)</h3>
+              </div>
+              <SemaforoBadge status="Green" label="En línea (>99.9%)" />
             </div>
-            <div className="flex gap-4 text-[11px] mt-3">
-              <Legend color="oklch(0.88 0.01 165)" label="Sin FocusPlace" />
-              <Legend color="oklch(0.42 0.09 165)" label="Con FocusPlace" />
+
+            <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
+              <div>
+                <div className="text-3xl font-display font-bold text-success">{uptimeScore}%</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Fórmula: ((Total Min - Inactivos) / Total Min) * 100</div>
+              </div>
+              <div className="text-right text-xs">
+                <div className="font-semibold text-success">Estado Óptimo</div>
+                <div className="text-muted-foreground mt-0.5">Latencia API: 42ms · 0 caídas este mes</div>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 text-xs text-muted-foreground">
+              <div className="flex justify-between"><span>Verde (&gt;99.9%): Servidor 100% operativo</span><strong className="text-success">&gt;99.9%</strong></div>
+              <div className="flex justify-between"><span>Servicios activos: Pasarela, QR & Notificaciones</span><strong className="text-foreground">OK</strong></div>
             </div>
           </div>
         </div>
 
-        {/* Funnel + distribution */}
-        <div className="grid lg:grid-cols-[1fr_1fr] gap-4 mt-4">
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <div className="font-display font-bold text-lg">Embudo de conversión</div>
-            <div className="text-xs text-muted-foreground">
-              De la visita a la app hasta el check-in en el local
-            </div>
-            <div className="mt-5 space-y-2.5">
-              {FUNNEL.map((f, i) => {
-                const pct = (f.value / FUNNEL[0].value) * 100;
-                return (
-                  <div key={f.label}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="font-medium">{f.label}</span>
-                      <span className="text-muted-foreground">
-                        {f.value.toLocaleString("es-EC")} · {pct.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="h-3 rounded-full bg-muted overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${pct}%`,
-                          background: `oklch(${0.42 + i * 0.07} 0.09 165)`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        {/* --- GRÁFICOS DE BARRAS (Indicadores 1, 2, 3 y 4) --- */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Indicador 1: Crecimiento de Usuarios Activos */}
+          <ChartCard
+            title="1. Crecimiento de Usuarios Activos (MoM)"
+            subtitle="Medición al cierre de cada mes (gráfico discreto de barras)"
+            formula="((Mes actual - Mes anterior) / Mes anterior) * 100"
+          >
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={USER_GROWTH_DATA}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="mes" stroke="#888888" fontSize={11} />
+                <YAxis stroke="#888888" fontSize={11} />
+                <Tooltip content={<CustomTooltip unit="usuarios" />} />
+                <Bar dataKey="activos" radius={[6, 6, 0, 0]} fill="oklch(0.42 0.09 165)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
 
-          <div className="bg-card border border-border rounded-2xl p-5">
-            <div className="font-display font-bold text-lg">Indicadores de servicio</div>
-            <div className="text-xs text-muted-foreground">Calidad de la experiencia medida en el piloto</div>
-            <div className="mt-5 space-y-4">
-              <Gauge label="Reservas con check-in efectivo" value={78} target={75} />
-              <Gauge label="Cupones canjeados" value={64} target={60} />
-              <Gauge label="Espacios con ocupación &gt; 40%" value={57} target={50} />
-              <Gauge label="Cancelaciones" value={12} target={15} invert />
-              <Gauge label="Reseñas ≥ 4 estrellas" value={91} target={85} />
-            </div>
-          </div>
+          {/* Indicador 2: Tasa de Ocupación de Espacios */}
+          <ChartCard
+            title="2. Tasa de Ocupación de Espacios (%)"
+            subtitle="Comparación del porcentaje de ocupación mensual"
+            formula="(Reservados / Disponibles) * 100"
+          >
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={OCCUPANCY_DATA}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="mes" stroke="#888888" fontSize={11} />
+                <YAxis stroke="#888888" fontSize={11} domain={[0, 100]} />
+                <Tooltip content={<CustomTooltip unit="%" />} />
+                <Bar dataKey="ocupacionPct" radius={[6, 6, 0, 0]} fill="oklch(0.78 0.16 75)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          {/* Indicador 3: Nivel de Satisfacción del Usuario */}
+          <ChartCard
+            title="3. Nivel de Satisfacción del Usuario (Rating)"
+            subtitle="Calificación promedio otorgada vs. volumen de reseñas"
+            formula="Suma de calificaciones / Número de reseñas"
+          >
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={SATISFACTION_DATA}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="mes" stroke="#888888" fontSize={11} />
+                <YAxis stroke="#888888" fontSize={11} domain={[3, 5]} />
+                <Tooltip content={<CustomTooltip unit="★" />} />
+                <Bar dataKey="rating" radius={[6, 6, 0, 0]} fill="oklch(0.65 0.18 140)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          {/* Indicador 4: Tasa de Conversión a Premium */}
+          <ChartCard
+            title="4. Tasa de Conversión a Premium (%)"
+            subtitle="Conversión comercial de usuarios gratuitos a suscriptores"
+            formula="(Suscritos / Usuarios activos) * 100"
+          >
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={CONVERSION_DATA}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="mes" stroke="#888888" fontSize={11} />
+                <YAxis stroke="#888888" fontSize={11} domain={[0, 25]} />
+                <Tooltip content={<CustomTooltip unit="%" />} />
+                <Bar dataKey="tasaPct" radius={[6, 6, 0, 0]} fill="oklch(0.55 0.2 260)" />
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartCard>
         </div>
 
-        {/* Table */}
-        <div className="bg-card border border-border rounded-2xl mt-4 overflow-hidden">
-          <div className="px-5 py-4 border-b border-border font-display font-bold text-lg">
-            Desempeño por local aliado
+        {/* --- GRÁFICOS DE LÍNEAS (Indicadores 6 y 7) --- */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Indicador 6: Tasa de No-shows / Ausencias */}
+          <ChartCard
+            title="6. Tasa de No-shows / Ausencias (%)"
+            subtitle="Evolución temporal limpia de la reducción de ausencias"
+            formula="(No presentadas / Confirmadas) * 100"
+          >
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={NOSHOW_DATA}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="semana" stroke="#888888" fontSize={11} />
+                <YAxis stroke="#888888" fontSize={11} domain={[0, 25]} />
+                <Tooltip content={<CustomTooltip unit="%" />} />
+                <Line
+                  type="monotone"
+                  dataKey="noShowPct"
+                  stroke="oklch(0.62 0.22 25)"
+                  strokeWidth={2.5}
+                  dot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          {/* Indicador 7: Crecimiento de Locales Afiliados */}
+          <ChartCard
+            title="7. Crecimiento de Locales Afiliados (Red B2B)"
+            subtitle="Tendencia de expansión de la red de establecimientos"
+            formula="((Actuales - Anteriores) / Anteriores) * 100"
+          >
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={PARTNERS_GROWTH_DATA}>
+                <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
+                <XAxis dataKey="mes" stroke="#888888" fontSize={11} />
+                <YAxis stroke="#888888" fontSize={11} />
+                <Tooltip content={<CustomTooltip unit="locales" />} />
+                <Line
+                  type="monotone"
+                  dataKey="locales"
+                  stroke="oklch(0.42 0.09 165)"
+                  strokeWidth={2.5}
+                  dot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartCard>
+        </div>
+
+        {/* --- Tabla de Desempeño por Aliado --- */}
+        <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-border font-display font-bold text-lg flex items-center justify-between">
+            <span>Rendimiento por Local Comercial Afiliado</span>
+            <span className="text-xs text-muted-foreground font-normal">Sincronización en vivo</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm min-w-[640px]">
               <thead className="text-xs text-muted-foreground bg-muted/40">
                 <tr>
-                  <th className="text-left px-5 py-2 font-medium">Local</th>
-                  <th className="text-left px-5 py-2 font-medium">Tipo</th>
-                  <th className="text-right px-5 py-2 font-medium">Reservas</th>
-                  <th className="text-right px-5 py-2 font-medium">Ocupación</th>
-                  <th className="text-right px-5 py-2 font-medium">Ingresos</th>
-                  <th className="text-right px-5 py-2 font-medium">Rating</th>
+                  <th className="text-left px-5 py-2.5 font-medium">Establecimiento</th>
+                  <th className="text-left px-5 py-2.5 font-medium">Categoría</th>
+                  <th className="text-right px-5 py-2.5 font-medium">Reservas Mes</th>
+                  <th className="text-right px-5 py-2.5 font-medium">Ocupación %</th>
+                  <th className="text-right px-5 py-2.5 font-medium">Comisión Generada</th>
+                  <th className="text-right px-5 py-2.5 font-medium">Satisfacción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {topSpaces.map((s) => (
-                  <tr key={s.name} className="hover:bg-muted/40">
-                    <td className="px-5 py-3 font-medium">{s.name}</td>
-                    <td className="px-5 py-3 text-muted-foreground">{s.type}</td>
-                    <td className="px-5 py-3 text-right">{s.reservas}</td>
-                    <td className="px-5 py-3 text-right">
-                      <div className="inline-flex items-center gap-2">
-                        <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full"
-                            style={{ width: `${s.ocupacion}%` }}
-                          />
+                {SPACES.map((s, i) => {
+                  const reservas = [142, 118, 94, 76, 52, 41][i] ?? 30;
+                  const ocupacionPct = Math.round((s.occupied / s.capacity) * 100);
+                  const comision = "$" + ([284, 412, 168, 224, 112, 98][i] ?? 70);
+
+                  return (
+                    <tr key={s.id} className="hover:bg-muted/40 transition">
+                      <td className="px-5 py-3 font-medium">{s.name}</td>
+                      <td className="px-5 py-3 text-muted-foreground text-xs">{s.type}</td>
+                      <td className="px-5 py-3 text-right font-semibold">{reservas}</td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="inline-flex items-center gap-2">
+                          <div className="w-16 h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className="h-full bg-primary rounded-full"
+                              style={{ width: `${ocupacionPct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground font-mono">{ocupacionPct}%</span>
                         </div>
-                        <span className="text-xs text-muted-foreground">{s.ocupacion}%</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-right">{s.ingreso}</td>
-                    <td className="px-5 py-3 text-right">★ {s.rating}</td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-5 py-3 text-right font-mono font-semibold">{comision}</td>
+                      <td className="px-5 py-3 text-right text-amber-500 font-semibold">★ {s.rating}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -312,7 +456,7 @@ function Dashboard() {
   );
 }
 
-function Kpi({
+function KpiCard({
   icon: Icon,
   label,
   value,
@@ -329,69 +473,94 @@ function Kpi({
 }) {
   return (
     <div
-      className={`rounded-2xl p-4 border ${
-        highlight ? "bg-warning/15 border-warning/40" : "bg-card border-border"
+      className={`rounded-2xl p-4 border transition ${
+        highlight ? "bg-amber-500/10 border-amber-500/30" : "bg-card border-border"
       }`}
     >
       <div className="flex items-center justify-between">
         <div
           className={`size-9 rounded-lg grid place-items-center ${
-            highlight ? "bg-warning/30 text-warning-foreground" : "bg-primary/10 text-primary"
+            highlight ? "bg-amber-500/20 text-amber-600" : "bg-primary/10 text-primary"
           }`}
         >
           <Icon className="size-4" />
         </div>
-        <span className="text-[11px] font-semibold text-success">{delta}</span>
+        <span className="text-[11px] font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">
+          {delta}
+        </span>
       </div>
       <div className="text-2xl font-display font-bold mt-3">{value}</div>
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="text-[10px] text-muted-foreground/80 mt-1">{meta}</div>
+      <div className="text-xs text-muted-foreground font-medium">{label}</div>
+      <div className="text-[10px] text-muted-foreground/80 font-mono mt-1">{meta}</div>
     </div>
   );
 }
 
-function Legend({ color, label, dashed }: { color: string; label: string; dashed?: boolean }) {
+function SemaforoBadge({ status, label }: { status: "Green" | "Yellow" | "Red"; label?: string }) {
+  const styles = {
+    Green: "bg-success/15 text-success border-success/30",
+    Yellow: "bg-warning/20 text-warning-foreground border-warning/40",
+    Red: "bg-destructive/15 text-destructive border-destructive/30",
+  };
+
+  const defaultLabels = {
+    Green: "Verde (>90%)",
+    Yellow: "Amarillo (50-89%)",
+    Red: "Rojo (<50%)",
+  };
+
   return (
-    <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+    <span
+      className={`px-3 py-1 rounded-full text-xs font-bold border inline-flex items-center gap-1.5 ${styles[status]}`}
+    >
       <span
-        className="w-4 h-0.5 rounded-full"
-        style={{ background: dashed ? `repeating-linear-gradient(90deg, ${color} 0 3px, transparent 3px 6px)` : color }}
+        className={`size-2 rounded-full ${
+          status === "Green"
+            ? "bg-success animate-pulse"
+            : status === "Yellow"
+            ? "bg-warning"
+            : "bg-destructive"
+        }`}
       />
-      {label}
+      {label || defaultLabels[status]}
     </span>
   );
 }
 
-function Gauge({
-  label,
-  value,
-  target,
-  invert,
+function ChartCard({
+  title,
+  subtitle,
+  formula,
+  children,
 }: {
-  label: string;
-  value: number;
-  target: number;
-  invert?: boolean;
+  title: string;
+  subtitle: string;
+  formula: string;
+  children: React.ReactNode;
 }) {
-  const ok = invert ? value <= target : value >= target;
   return (
-    <div>
-      <div className="flex justify-between text-xs mb-1">
-        <span className="font-medium" dangerouslySetInnerHTML={{ __html: label }} />
-        <span className={ok ? "text-success font-semibold" : "text-destructive font-semibold"}>
-          {value}% <span className="text-muted-foreground font-normal">/ meta {target}%</span>
-        </span>
+    <div className="bg-card border border-border rounded-2xl p-5 shadow-sm space-y-3">
+      <div>
+        <h3 className="font-display font-bold text-base">{title}</h3>
+        <p className="text-xs text-muted-foreground">{subtitle}</p>
+        <div className="text-[10px] font-mono text-primary/80 mt-0.5">Fórmula: {formula}</div>
       </div>
-      <div className="relative h-2.5 rounded-full bg-muted overflow-hidden">
-        <div
-          className={`h-full rounded-full ${ok ? "bg-success" : "bg-destructive"}`}
-          style={{ width: `${value}%` }}
-        />
-        <div
-          className="absolute top-0 bottom-0 w-0.5 bg-foreground/50"
-          style={{ left: `${target}%` }}
-        />
-      </div>
+      <div className="pt-2">{children}</div>
     </div>
   );
 }
+
+function CustomTooltip({ active, payload, label, unit }: any) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-card border border-border rounded-xl p-2.5 shadow-xl text-xs space-y-1">
+        <div className="font-bold">{label}</div>
+        <div className="text-primary font-semibold">
+          {payload[0].value} {unit}
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
